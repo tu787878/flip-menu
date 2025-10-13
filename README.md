@@ -103,6 +103,19 @@ Allow other websites to embed your flip menus with a simple code snippet:
 
 **For complete API documentation, see [API_DOCUMENTATION.md](API_DOCUMENTATION.md)**
 
+### Troubleshooting Network Errors
+
+If you get "Network error" when using the widget from external websites:
+
+**Quick Fix:**
+1. Go to **Flip Menu > API & Embed**
+2. Check "Enable API" ✅
+3. Check "Enable CORS" ✅
+4. Set "Allowed Origins" to `*`
+5. Save and refresh external site
+
+**For detailed troubleshooting, see [NETWORK_ERROR_FIX.md](NETWORK_ERROR_FIX.md)**
+
 ## Turn.js Library
 
 This plugin requires the Turn.js library for the flip effect. You need to:

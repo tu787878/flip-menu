@@ -303,18 +303,84 @@ class Flip_Menu_API {
 	 * @since    1.0.0
 	 */
 	public function add_cors_headers() {
+		// This method is kept for backwards compatibility
+		// Actual CORS handling is done via rest_pre_serve_request filter
+	}
+
+	/**
+	 * Add CORS headers to REST API responses.
+	 *
+	 * @since    1.0.0
+	 * @param    bool              $served  Whether the request has already been served.
+	 * @param    WP_REST_Response  $result  Result to send to the client.
+	 * @param    WP_REST_Request   $request The request object.
+	 * @param    WP_REST_Server    $server  Server instance.
+	 * @return   bool
+	 */
+	public function add_rest_cors_headers( $served, $result, $request, $server ) {
+		// Only add headers for our endpoints
+		if ( strpos( $request->get_route(), '/flip-menu/' ) === false ) {
+			return $served;
+		}
+
 		$allow_cors = get_option( 'flip_menu_api_cors_enabled', true );
 
 		if ( ! $allow_cors ) {
-			return;
+			return $served;
 		}
 
 		$allowed_origins = get_option( 'flip_menu_api_allowed_origins', '*' );
 
-		header( 'Access-Control-Allow-Origin: ' . $allowed_origins );
-		header( 'Access-Control-Allow-Methods: GET, OPTIONS' );
-		header( 'Access-Control-Allow-Headers: X-API-Key, Content-Type' );
-		header( 'Access-Control-Allow-Credentials: true' );
+		// Get the origin of the request
+		$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
+
+		// Check if origin is allowed
+		if ( $allowed_origins === '*' ) {
+			header( 'Access-Control-Allow-Origin: *' );
+		} elseif ( $origin && $this->is_origin_allowed( $origin, $allowed_origins ) ) {
+			header( 'Access-Control-Allow-Origin: ' . $origin );
+			header( 'Vary: Origin' );
+		}
+
+		header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+		header( 'Access-Control-Allow-Headers: X-API-Key, Content-Type, Authorization' );
+		header( 'Access-Control-Max-Age: 86400' ); // 24 hours
+
+		// Handle preflight requests
+		if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
+			status_header( 200 );
+			exit;
+		}
+
+		return $served;
+	}
+
+	/**
+	 * Check if origin is allowed.
+	 *
+	 * @since    1.0.0
+	 * @param    string    $origin           The origin to check.
+	 * @param    string    $allowed_origins  Comma-separated list of allowed origins.
+	 * @return   bool
+	 */
+	private function is_origin_allowed( $origin, $allowed_origins ) {
+		$allowed = array_map( 'trim', explode( ',', $allowed_origins ) );
+
+		foreach ( $allowed as $allowed_origin ) {
+			if ( $allowed_origin === $origin ) {
+				return true;
+			}
+
+			// Support wildcard subdomains (e.g., *.example.com)
+			if ( strpos( $allowed_origin, '*' ) !== false ) {
+				$pattern = str_replace( '*', '.*', preg_quote( $allowed_origin, '/' ) );
+				if ( preg_match( '/^' . $pattern . '$/', $origin ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 }

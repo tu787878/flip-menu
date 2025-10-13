@@ -198,7 +198,7 @@ class Flip_Menu {
 		$plugin_api = new Flip_Menu_API( $this->get_plugin_name() );
 
 		$this->loader->add_action( 'rest_api_init', $plugin_api, 'register_routes' );
-		$this->loader->add_action( 'rest_api_init', $plugin_api, 'add_cors_headers' );
+		$this->loader->add_filter( 'rest_pre_serve_request', $plugin_api, 'add_rest_cors_headers', 10, 4 );
 
 	}
 

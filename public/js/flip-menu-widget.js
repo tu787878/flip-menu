@@ -81,11 +81,13 @@
                 if (data.success && data.data) {
                     self.renderWidget(element, data.data, config);
                 } else {
-                    element.innerHTML = '<p style="color: red;">Error: ' + (data.message || 'Failed to load menu') + '</p>';
+                    self.showError(element, {
+                        type: 'api_error',
+                        message: data.message || 'Failed to load menu'
+                    });
                 }
             }, function(error) {
-                element.innerHTML = '<p style="color: red;">Error: Failed to connect to API</p>';
-                console.error('Flip Menu Widget Error:', error);
+                self.showError(element, error);
             });
         },
 
@@ -106,16 +108,64 @@
                         var data = JSON.parse(xhr.responseText);
                         successCallback(data);
                     } catch (e) {
-                        errorCallback(e);
+                        errorCallback({
+                            type: 'parse_error',
+                            message: 'Failed to parse JSON response',
+                            error: e,
+                            response: xhr.responseText
+                        });
                     }
                 } else {
-                    errorCallback(new Error('HTTP ' + xhr.status));
+                    var errorMessage = 'HTTP ' + xhr.status;
+                    var errorType = 'http_error';
+
+                    try {
+                        var errorData = JSON.parse(xhr.responseText);
+                        if (errorData.message) {
+                            errorMessage = errorData.message;
+                        }
+                    } catch (e) {
+                        // Response is not JSON, use status text
+                        errorMessage = xhr.statusText || errorMessage;
+                    }
+
+                    if (xhr.status === 0) {
+                        errorType = 'cors_error';
+                        errorMessage = 'CORS error: Cannot connect to API. Check CORS settings.';
+                    } else if (xhr.status === 403) {
+                        errorType = 'auth_error';
+                        errorMessage = 'Authentication failed. Check API key or CORS settings.';
+                    } else if (xhr.status === 404) {
+                        errorType = 'not_found';
+                        errorMessage = 'API endpoint not found. Check shop ID.';
+                    }
+
+                    errorCallback({
+                        type: errorType,
+                        message: errorMessage,
+                        status: xhr.status,
+                        response: xhr.responseText
+                    });
                 }
             };
 
             xhr.onerror = function() {
-                errorCallback(new Error('Network error'));
+                errorCallback({
+                    type: 'network_error',
+                    message: 'Network error: Cannot connect to server. Check CORS and internet connection.',
+                    status: 0
+                });
             };
+
+            xhr.ontimeout = function() {
+                errorCallback({
+                    type: 'timeout_error',
+                    message: 'Request timeout: Server took too long to respond.',
+                    status: 0
+                });
+            };
+
+            xhr.timeout = 30000; // 30 seconds timeout
 
             xhr.send();
         },
@@ -333,11 +383,70 @@
         },
 
         /**
+         * Show error message with debugging info
+         */
+        showError: function(element, error) {
+            var errorHtml = '<div class="flip-menu-widget-error" style="padding: 20px; background: #fee; border: 2px solid #c00; border-radius: 5px;">';
+            errorHtml += '<h3 style="color: #c00; margin-top: 0;">⚠️ Flip Menu Error</h3>';
+            errorHtml += '<p><strong>Error Type:</strong> ' + this.escapeHtml(error.type || 'unknown') + '</p>';
+            errorHtml += '<p><strong>Message:</strong> ' + this.escapeHtml(error.message || 'Unknown error') + '</p>';
+
+            // Add helpful troubleshooting based on error type
+            if (error.type === 'cors_error' || error.type === 'network_error') {
+                errorHtml += '<div style="background: #fff; padding: 10px; margin: 10px 0; border-left: 3px solid #c00;">';
+                errorHtml += '<p><strong>Troubleshooting CORS/Network Errors:</strong></p>';
+                errorHtml += '<ol style="margin: 5px 0; padding-left: 20px;">';
+                errorHtml += '<li>Go to WordPress Admin → Flip Menu → API & Embed</li>';
+                errorHtml += '<li>Check "Enable API" checkbox</li>';
+                errorHtml += '<li>Check "Enable CORS" checkbox</li>';
+                errorHtml += '<li>Set "Allowed Origins" to <code>*</code> or your domain</li>';
+                errorHtml += '<li>Save settings and refresh this page</li>';
+                errorHtml += '</ol>';
+                errorHtml += '</div>';
+            } else if (error.type === 'auth_error') {
+                errorHtml += '<div style="background: #fff; padding: 10px; margin: 10px 0; border-left: 3px solid #c00;">';
+                errorHtml += '<p><strong>Authentication Issue:</strong></p>';
+                errorHtml += '<ul style="margin: 5px 0; padding-left: 20px;">';
+                errorHtml += '<li>Check if API key is correct</li>';
+                errorHtml += '<li>Verify API is enabled in WordPress admin</li>';
+                errorHtml += '<li>Check CORS allowed origins</li>';
+                errorHtml += '</ul>';
+                errorHtml += '</div>';
+            } else if (error.type === 'not_found') {
+                errorHtml += '<div style="background: #fff; padding: 10px; margin: 10px 0; border-left: 3px solid #c00;">';
+                errorHtml += '<p><strong>Not Found:</strong></p>';
+                errorHtml += '<ul style="margin: 5px 0; padding-left: 20px;">';
+                errorHtml += '<li>Check if shop ID exists</li>';
+                errorHtml += '<li>Verify API URL is correct</li>';
+                errorHtml += '<li>Check WordPress permalinks are enabled</li>';
+                errorHtml += '</ul>';
+                errorHtml += '</div>';
+            }
+
+            // Show technical details in console
+            errorHtml += '<details style="margin-top: 10px;">';
+            errorHtml += '<summary style="cursor: pointer; color: #666;">Show Technical Details</summary>';
+            errorHtml += '<pre style="background: #f5f5f5; padding: 10px; overflow: auto; font-size: 11px;">';
+            errorHtml += JSON.stringify(error, null, 2);
+            errorHtml += '</pre>';
+            errorHtml += '</details>';
+
+            errorHtml += '</div>';
+
+            element.innerHTML = errorHtml;
+
+            // Log to console for debugging
+            console.error('Flip Menu Widget Error:', error);
+            console.log('To fix this error, check the troubleshooting steps above.');
+        },
+
+        /**
          * Escape HTML to prevent XSS
          */
         escapeHtml: function(text) {
+            if (!text) return '';
             var div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = String(text);
             return div.innerHTML;
         }
     };

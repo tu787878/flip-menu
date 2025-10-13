@@ -6,8 +6,8 @@
  * @link       http://example.com
  * @since      1.0.0
  *
- * @package    Plugin_Name
- * @subpackage Plugin_Name/includes
+ * @package    Flip_Menu
+ * @subpackage Flip_Menu/includes
  */
 
 /**
@@ -16,21 +16,22 @@
  * This class defines all code necessary to run during the plugin's deactivation.
  *
  * @since      1.0.0
- * @package    Plugin_Name
- * @subpackage Plugin_Name/includes
+ * @package    Flip_Menu
+ * @subpackage Flip_Menu/includes
  * @author     Your Name <email@example.com>
  */
-class Plugin_Name_Deactivator {
+class Flip_Menu_Deactivator {
 
 	/**
-	 * Short Description. (use period)
+	 * Clean up on plugin deactivation.
 	 *
-	 * Long Description.
+	 * Note: Tables are NOT dropped on deactivation, only on uninstall.
 	 *
 	 * @since    1.0.0
 	 */
 	public static function deactivate() {
-
+		// Clear any cached data if needed
+		wp_cache_flush();
 	}
 
 }

@@ -10,12 +10,12 @@
  *
  * @link              http://example.com
  * @since             1.0.0
- * @package           Plugin_Name
+ * @package           Flip_Menu
  *
  * @wordpress-plugin
- * Plugin Name:       WordPress Plugin Boilerplate
+ * Plugin Name:       Flip Menu
  * Plugin URI:        http://example.com/flip-menu-uri/
- * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
+ * Description:       Create interactive flip menus using Turn.js. Upload PDFs or images to create beautiful flip-through menus for different shops.
  * Version:           1.0.0
  * Author:            Your Name or Your Company
  * Author URI:        http://example.com/
@@ -35,28 +35,30 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'PLUGIN_NAME_VERSION', '1.0.0' );
+define( 'FLIP_MENU_VERSION', '1.0.0' );
+define( 'FLIP_MENU_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'FLIP_MENU_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-flip-menu-activator.php
  */
-function activate_plugin_name() {
+function activate_flip_menu() {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-flip-menu-activator.php';
-	Plugin_Name_Activator::activate();
+	Flip_Menu_Activator::activate();
 }
 
 /**
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-flip-menu-deactivator.php
  */
-function deactivate_plugin_name() {
+function deactivate_flip_menu() {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-flip-menu-deactivator.php';
-	Plugin_Name_Deactivator::deactivate();
+	Flip_Menu_Deactivator::deactivate();
 }
 
-register_activation_hook( __FILE__, 'activate_plugin_name' );
-register_deactivation_hook( __FILE__, 'deactivate_plugin_name' );
+register_activation_hook( __FILE__, 'activate_flip_menu' );
+register_deactivation_hook( __FILE__, 'deactivate_flip_menu' );
 
 /**
  * The core plugin class that is used to define internationalization,
@@ -73,10 +75,10 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-flip-menu.php';
  *
  * @since    1.0.0
  */
-function run_plugin_name() {
+function run_flip_menu() {
 
-	$plugin = new Plugin_Name();
+	$plugin = new Flip_Menu();
 	$plugin->run();
 
 }
-run_plugin_name();
+run_flip_menu();

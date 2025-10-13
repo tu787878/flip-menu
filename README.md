@@ -9,6 +9,10 @@ A WordPress plugin that uses Turn.js to create interactive flip menus for differ
 - Upload PDF files (requires conversion to images for display)
 - Easy-to-use admin interface
 - Shortcode support for embedding menus anywhere
+- **REST API for external access**
+- **Embeddable widget for any website**
+- **API key authentication**
+- **CORS support for cross-origin requests**
 - Responsive design
 - Keyboard navigation (arrow keys)
 - Touch/swipe support on mobile devices
@@ -53,6 +57,51 @@ Example with custom dimensions:
 ```
 [flip_menu shop_id="1" width="1000" height="700"]
 ```
+
+## REST API & Embeddable Widget
+
+### REST API
+
+The plugin provides a complete REST API for external access to shop and menu data.
+
+**Base URL:** `https://yoursite.com/wp-json/flip-menu/v1`
+
+**Available Endpoints:**
+- `GET /shops` - Get all shops
+- `GET /shops/{id}` - Get single shop
+- `GET /shops/{id}/menu` - Get shop menu items
+- `GET /shops/{id}/complete` - Get shop with menu items
+
+**Example:**
+```bash
+curl -X GET "https://yoursite.com/wp-json/flip-menu/v1/shops/1/complete" \
+     -H "X-API-Key: your-api-key"
+```
+
+### Embeddable Widget
+
+Allow other websites to embed your flip menus with a simple code snippet:
+
+```html
+<div data-flip-menu-widget
+     data-shop-id="1"
+     data-api-url="https://yoursite.com/wp-json"
+     data-api-key="your-api-key"
+     data-width="800"
+     data-height="600">
+</div>
+<script src="https://yoursite.com/wp-content/plugins/flip-menu/public/js/flip-menu-widget.js"></script>
+```
+
+### Configuration
+
+1. Go to **Flip Menu > API & Embed** in WordPress admin
+2. Enable API access
+3. Generate an API key (optional, for security)
+4. Enable CORS for cross-domain access
+5. Use the embed code generator to create widget code
+
+**For complete API documentation, see [API_DOCUMENTATION.md](API_DOCUMENTATION.md)**
 
 ## Turn.js Library
 

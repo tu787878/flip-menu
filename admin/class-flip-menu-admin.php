@@ -138,6 +138,15 @@ class Flip_Menu_Admin {
 			array( $this, 'display_manage_menus_page' )
 		);
 
+		add_submenu_page(
+			$this->plugin_name,
+			__( 'API & Embed', 'flip-menu' ),
+			__( 'API & Embed', 'flip-menu' ),
+			'manage_options',
+			$this->plugin_name . '-api',
+			array( $this, 'display_api_settings_page' )
+		);
+
 	}
 
 	/**
@@ -146,7 +155,11 @@ class Flip_Menu_Admin {
 	 * @since    1.0.0
 	 */
 	public function register_settings() {
-		// Can add settings here if needed
+		// API Settings
+		register_setting( 'flip_menu_api_settings', 'flip_menu_api_enabled' );
+		register_setting( 'flip_menu_api_settings', 'flip_menu_api_key' );
+		register_setting( 'flip_menu_api_settings', 'flip_menu_api_cors_enabled' );
+		register_setting( 'flip_menu_api_settings', 'flip_menu_api_allowed_origins' );
 	}
 
 	/**
@@ -175,6 +188,63 @@ class Flip_Menu_Admin {
 	 */
 	public function display_manage_menus_page() {
 		include_once( 'partials/flip-menu-admin-manage-menus.php' );
+	}
+
+	/**
+	 * Display the API settings page.
+	 *
+	 * @since    1.0.0
+	 */
+	public function display_api_settings_page() {
+		$this->handle_api_settings_form();
+		include_once( 'partials/flip-menu-admin-api-settings.php' );
+	}
+
+	/**
+	 * Handle API settings form submission.
+	 *
+	 * @since    1.0.0
+	 */
+	private function handle_api_settings_form() {
+		if ( ! isset( $_POST['flip_menu_api_settings_nonce'] ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce( $_POST['flip_menu_api_settings_nonce'], 'flip_menu_api_settings_action' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Save settings
+		update_option( 'flip_menu_api_enabled', isset( $_POST['api_enabled'] ) ? 1 : 0 );
+
+		if ( isset( $_POST['generate_new_key'] ) ) {
+			$new_key = wp_generate_password( 32, false );
+			update_option( 'flip_menu_api_key', $new_key );
+		} elseif ( isset( $_POST['api_key'] ) ) {
+			update_option( 'flip_menu_api_key', sanitize_text_field( $_POST['api_key'] ) );
+		}
+
+		update_option( 'flip_menu_api_cors_enabled', isset( $_POST['cors_enabled'] ) ? 1 : 0 );
+		update_option( 'flip_menu_api_allowed_origins', sanitize_text_field( $_POST['allowed_origins'] ) );
+
+		add_action( 'admin_notices', array( $this, 'api_settings_saved_notice' ) );
+	}
+
+	/**
+	 * Display admin notice for successful API settings save.
+	 *
+	 * @since    1.0.0
+	 */
+	public function api_settings_saved_notice() {
+		?>
+		<div class="notice notice-success is-dismissible">
+			<p><?php _e( 'API settings saved successfully!', 'flip-menu' ); ?></p>
+		</div>
+		<?php
 	}
 
 	/**

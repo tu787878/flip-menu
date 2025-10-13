@@ -78,6 +78,7 @@ class Flip_Menu {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+		$this->define_api_hooks();
 
 	}
 
@@ -121,6 +122,11 @@ class Flip_Menu {
 		 * side of the site.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-flip-menu-public.php';
+
+		/**
+		 * The class responsible for REST API functionality.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-flip-menu-api.php';
 
 		$this->loader = new Flip_Menu_Loader();
 
@@ -178,6 +184,21 @@ class Flip_Menu {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 		$this->loader->add_action( 'init', $plugin_public, 'register_shortcode' );
+
+	}
+
+	/**
+	 * Register all of the hooks related to the REST API functionality.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 */
+	private function define_api_hooks() {
+
+		$plugin_api = new Flip_Menu_API( $this->get_plugin_name() );
+
+		$this->loader->add_action( 'rest_api_init', $plugin_api, 'register_routes' );
+		$this->loader->add_action( 'rest_api_init', $plugin_api, 'add_cors_headers' );
 
 	}
 

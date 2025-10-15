@@ -18,6 +18,7 @@ $allowed_origins = get_option( 'flip_menu_api_allowed_origins', '*' );
 $site_url = get_site_url();
 $api_base_url = rest_url( 'flip-menu/v1' );
 $widget_script_url = plugin_dir_url( dirname( __FILE__ ) ) . '../public/js/flip-menu-widget.js';
+$turnjs_script_url = plugin_dir_url( dirname( __FILE__ ) ) . '../public/js/turn.min.js';
 
 global $wpdb;
 $shops_table = $wpdb->prefix . 'flip_menu_shops';
@@ -217,6 +218,8 @@ function generateEmbedCode() {
 	var apiUrl = '<?php echo esc_js( rest_url() ); ?>';
 	var apiKey = '<?php echo esc_js( $api_key ); ?>';
 	var widgetUrl = '<?php echo esc_js( $widget_script_url ); ?>';
+	var turnjsUrl = '<?php echo esc_js( $turnjs_script_url ); ?>';
+
 
 	var embedCode = '<!-- Flip Menu Widget -->\n';
 	embedCode += '<div data-flip-menu-widget\n';
@@ -228,7 +231,7 @@ function generateEmbedCode() {
 	embedCode += '     data-width="' + width + '"\n';
 	embedCode += '     data-height="' + height + '">\n';
 	embedCode += '</div>\n';
-	embedCode += '<script src="https://www.tcg-speisekarte.de/wp-content/plugins/flip-menu/public/js/turn.min.js"></script>';
+	embedCode += '<script src="'+turnjsUrl+'"><\/script>';
 	embedCode += '<script src="' + widgetUrl + '"><\/script>';
 	document.getElementById('embed-code').value = embedCode;
 

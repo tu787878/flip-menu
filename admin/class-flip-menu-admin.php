@@ -51,10 +51,6 @@ class Flip_Menu_Admin {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
-
-		// Add these to your loader or in __construct
-		add_action( 'wp_ajax_flip_menu_update_order', array( $this, 'handle_update_order' ) );
-		add_action( 'wp_ajax_flip_menu_delete_all_items', array( $this, 'handle_delete_all_items' ) );
 	}
 
 	/**

@@ -167,7 +167,8 @@ class Flip_Menu {
 		$this->loader->add_action( 'wp_ajax_flip_menu_upload_pdf', $plugin_admin, 'handle_pdf_upload' );
 		$this->loader->add_action( 'wp_ajax_flip_menu_upload_image', $plugin_admin, 'handle_image_upload' );
 		$this->loader->add_action( 'wp_ajax_flip_menu_delete_item', $plugin_admin, 'handle_delete_item' );
-
+		$this->loader->add_action( 'wp_ajax_flip_menu_update_order', $plugin_admin, 'handle_update_order' );
+		$this->loader->add_action( 'wp_ajax_flip_menu_delete_all_items', $plugin_admin, 'handle_delete_all_items' );
 	}
 
 	/**

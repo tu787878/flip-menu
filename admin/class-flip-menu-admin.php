@@ -52,6 +52,9 @@ class Flip_Menu_Admin {
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 
+		// Add these to your loader or in __construct
+		add_action( 'wp_ajax_flip_menu_update_order', array( $this, 'handle_update_order' ) );
+		add_action( 'wp_ajax_flip_menu_delete_all_items', array( $this, 'handle_delete_all_items' ) );
 	}
 
 	/**
@@ -445,6 +448,59 @@ class Flip_Menu_Admin {
 			wp_send_json_success( array( 'message' => __( 'Item deleted successfully', 'flip-menu' ) ) );
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Failed to delete item', 'flip-menu' ) ) );
+		}
+	}
+
+	/**
+	 * Handle inline page order update via AJAX.
+	 */
+	public function handle_update_order() {
+		check_ajax_referer( 'flip_menu_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied', 'flip-menu' ) ) );
+		}
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'flip_menu_items';
+		$item_id = intval( $_POST['item_id'] );
+		$page_order = intval( $_POST['page_order'] );
+
+		$updated = $wpdb->update(
+			$table_name,
+			array( 'page_order' => $page_order ),
+			array( 'id' => $item_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+
+		if ( $updated !== false ) {
+			wp_send_json_success( array( 'message' => __( 'Order updated', 'flip-menu' ) ) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to update order', 'flip-menu' ) ) );
+		}
+	}
+
+	/**
+	 * Handle delete all menu items via AJAX.
+	 */
+	public function handle_delete_all_items() {
+		check_ajax_referer( 'flip_menu_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied', 'flip-menu' ) ) );
+		}
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'flip_menu_items';
+		$shop_id = intval( $_POST['shop_id'] );
+
+		$deleted = $wpdb->delete( $table_name, array( 'shop_id' => $shop_id ), array( '%d' ) );
+
+		if ( $deleted !== false ) {
+			wp_send_json_success( array( 'message' => __( 'All items deleted', 'flip-menu' ) ) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete items', 'flip-menu' ) ) );
 		}
 	}
 

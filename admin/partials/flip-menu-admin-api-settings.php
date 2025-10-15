@@ -228,8 +228,8 @@ function generateEmbedCode() {
 	embedCode += '     data-width="' + width + '"\n';
 	embedCode += '     data-height="' + height + '">\n';
 	embedCode += '</div>\n';
+	embedCode += '<script src="https://www.tcg-speisekarte.de/wp-content/plugins/flip-menu/public/js/turn.min.js"></script>';
 	embedCode += '<script src="' + widgetUrl + '"><\/script>';
-
 	document.getElementById('embed-code').value = embedCode;
 
 	// Update preview

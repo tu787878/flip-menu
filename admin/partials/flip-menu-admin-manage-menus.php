@@ -265,6 +265,7 @@ jQuery(document).ready(function($) {
 
 	// Delete all items
 	$('#delete-all-items').on('click', function() {
+		console.log("delete all clicked");
 		$.ajax({
 			url: flipMenuAdmin.ajax_url,
 			type: 'POST',
@@ -274,6 +275,7 @@ jQuery(document).ready(function($) {
 				shop_id: <?php echo intval($selected_shop); ?>
 			},
 			success: function(response) {
+				console.log(response);
 				if (response.success) {
 					$('#menu-items-list').empty().append('<tr><td colspan="5"><?php _e( 'No menu items found. Upload your first menu!', 'flip-menu' ); ?></td></tr>');
 				} else {

@@ -365,7 +365,7 @@ class Flip_Menu_Admin {
 			wp_send_json_error( array( 'message' => __( 'Permission denied', 'flip-menu' ) ) );
 		}
 
-		if ( ! isset( $_FILES['image_file'] ) ) {
+		if ( empty( $_FILES['image_file'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'No file uploaded', 'flip-menu' ) ) );
 		}
 
@@ -373,37 +373,54 @@ class Flip_Menu_Admin {
 		require_once( ABSPATH . 'wp-admin/includes/media.php' );
 		require_once( ABSPATH . 'wp-admin/includes/image.php' );
 
-		$file = $_FILES['image_file'];
 		$shop_id = intval( $_POST['shop_id'] );
-		$page_order = intval( $_POST['page_order'] );
+		$responses = [];
 
-		$upload_overrides = array( 'test_form' => false );
-		$movefile = wp_handle_upload( $file, $upload_overrides );
+		// Support multiple files
+		$files = $_FILES['image_file'];
+		$file_count = is_array($files['name']) ? count($files['name']) : 1;
 
-		if ( $movefile && ! isset( $movefile['error'] ) ) {
-			global $wpdb;
-			$table_name = $wpdb->prefix . 'flip_menu_items';
+		for ($i = 0; $i < $file_count; $i++) {
+			$file = [
+				'name'     => is_array($files['name']) ? $files['name'][$i] : $files['name'],
+				'type'     => is_array($files['type']) ? $files['type'][$i] : $files['type'],
+				'tmp_name' => is_array($files['tmp_name']) ? $files['tmp_name'][$i] : $files['tmp_name'],
+				'error'    => is_array($files['error']) ? $files['error'][$i] : $files['error'],
+				'size'     => is_array($files['size']) ? $files['size'][$i] : $files['size'],
+			];
 
-			$wpdb->insert(
-				$table_name,
-				array(
-					'shop_id' => $shop_id,
-					'title' => sanitize_text_field( $_POST['title'] ),
-					'source_type' => 'image',
-					'source_url' => $movefile['url'],
-					'page_order' => $page_order
-				),
-				array( '%d', '%s', '%s', '%s', '%d' )
-			);
+			$upload_overrides = array( 'test_form' => false );
+			$movefile = wp_handle_upload( $file, $upload_overrides );
 
-			wp_send_json_success( array(
-				'message' => __( 'Image uploaded successfully', 'flip-menu' ),
-				'url' => $movefile['url'],
-				'id' => $wpdb->insert_id
-			) );
-		} else {
-			wp_send_json_error( array( 'message' => $movefile['error'] ) );
+			if ( $movefile && ! isset( $movefile['error'] ) ) {
+				global $wpdb;
+				$table_name = $wpdb->prefix . 'flip_menu_items';
+
+				$page_order = isset($_POST['page_order']) && is_array($_POST['page_order']) ? intval($_POST['page_order'][$i]) : intval($_POST['page_order']);
+
+				$wpdb->insert(
+					$table_name,
+					array(
+						'shop_id'     => $shop_id,
+						'title'       => '', // No title
+						'source_type' => 'image',
+						'source_url'  => $movefile['url'],
+						'page_order'  => $page_order
+					),
+					array( '%d', '%s', '%s', '%s', '%d' )
+				);
+
+				$responses[] = array(
+					'message' => __( 'Image uploaded successfully', 'flip-menu' ),
+					'url'     => $movefile['url'],
+					'id'      => $wpdb->insert_id
+				);
+			} else {
+				$responses[] = array( 'message' => $movefile['error'] );
+			}
 		}
+
+		wp_send_json_success( $responses );
 	}
 
 	/**

@@ -78,16 +78,12 @@ if ( $selected_shop ) {
 					<input type="hidden" name="shop_id" value="<?php echo esc_attr( $selected_shop ); ?>" />
 					<table class="form-table">
 						<tr>
-							<th><label for="image-title"><?php _e( 'Title', 'flip-menu' ); ?></label></th>
-							<td><input type="text" id="image-title" name="title" class="regular-text" required /></td>
-						</tr>
-						<tr>
 							<th><label for="page-order"><?php _e( 'Page Order', 'flip-menu' ); ?></label></th>
 							<td><input type="number" id="page-order" name="page_order" value="0" min="0" /></td>
 						</tr>
 						<tr>
 							<th><label for="image-file"><?php _e( 'Image File', 'flip-menu' ); ?></label></th>
-							<td><input type="file" id="image-file" name="image_file" accept="image/*" required /></td>
+							<td><input type="file" id="image-file" name="image_file" accept="image/*" required multiple/></td>
 						</tr>
 					</table>
 					<button type="submit" class="button button-primary"><?php _e( 'Upload Image', 'flip-menu' ); ?></button>
@@ -102,7 +98,6 @@ if ( $selected_shop ) {
 				<thead>
 					<tr>
 						<th><?php _e( 'ID', 'flip-menu' ); ?></th>
-						<th><?php _e( 'Title', 'flip-menu' ); ?></th>
 						<th><?php _e( 'Type', 'flip-menu' ); ?></th>
 						<th><?php _e( 'Page Order', 'flip-menu' ); ?></th>
 						<th><?php _e( 'Preview', 'flip-menu' ); ?></th>
@@ -114,7 +109,6 @@ if ( $selected_shop ) {
 						<?php foreach ( $menu_items as $item ) : ?>
 							<tr data-item-id="<?php echo esc_attr( $item->id ); ?>">
 								<td><?php echo esc_html( $item->id ); ?></td>
-								<td><?php echo esc_html( $item->title ); ?></td>
 								<td><?php echo esc_html( strtoupper( $item->source_type ) ); ?></td>
 								<td><?php echo esc_html( $item->page_order ); ?></td>
 								<td>
@@ -133,7 +127,7 @@ if ( $selected_shop ) {
 						<?php endforeach; ?>
 					<?php else : ?>
 						<tr>
-							<td colspan="6"><?php _e( 'No menu items found. Upload your first menu!', 'flip-menu' ); ?></td>
+							<td colspan="5"><?php _e( 'No menu items found. Upload your first menu!', 'flip-menu' ); ?></td>
 						</tr>
 					<?php endif; ?>
 				</tbody>

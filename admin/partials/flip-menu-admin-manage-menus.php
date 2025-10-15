@@ -83,7 +83,7 @@ if ( $selected_shop ) {
 						</tr>
 						<tr>
 							<th><label for="image-file"><?php _e( 'Image File', 'flip-menu' ); ?></label></th>
-							<td><input type="file" id="image-file" name="image_file" accept="image/*" required multiple/></td>
+							<td><input type="file" id="image-file" name="image_file[]" accept="image/*" required multiple/></td>
 						</tr>
 					</table>
 					<button type="submit" class="button button-primary"><?php _e( 'Upload Image', 'flip-menu' ); ?></button>

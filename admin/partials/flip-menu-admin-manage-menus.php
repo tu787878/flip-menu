@@ -265,7 +265,6 @@ jQuery(document).ready(function($) {
 
 	// Delete all items
 	$('#delete-all-items').on('click', function() {
-		if (!confirm('<?php _e( 'Are you sure you want to delete all menu items?', 'flip-menu' ); ?>')) return;
 		$.ajax({
 			url: flipMenuAdmin.ajax_url,
 			type: 'POST',

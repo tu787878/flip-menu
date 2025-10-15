@@ -205,9 +205,6 @@ jQuery(document).ready(function($) {
 
 	// Delete Item
 	$('.delete-item').on('click', function() {
-		if (!confirm('<?php _e( 'Are you sure you want to delete this item?', 'flip-menu' ); ?>')) {
-			return;
-		}
 
 		var itemId = $(this).data('item-id');
 		var $row = $(this).closest('tr');

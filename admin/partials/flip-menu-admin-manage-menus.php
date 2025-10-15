@@ -94,6 +94,9 @@ if ( $selected_shop ) {
 
 		<div style="margin-top: 30px;">
 			<h2><?php _e( 'Current Menu Items', 'flip-menu' ); ?></h2>
+			<button id="delete-all-items" class="button button-danger" style="margin-bottom:10px;">
+				<?php _e( 'Delete All', 'flip-menu' ); ?>
+			</button>
 			<table class="wp-list-table widefat fixed striped">
 				<thead>
 					<tr>
@@ -110,7 +113,9 @@ if ( $selected_shop ) {
 							<tr data-item-id="<?php echo esc_attr( $item->id ); ?>">
 								<td><?php echo esc_html( $item->id ); ?></td>
 								<td><?php echo esc_html( strtoupper( $item->source_type ) ); ?></td>
-								<td><?php echo esc_html( $item->page_order ); ?></td>
+								<td>
+									<input type="number" class="inline-order" value="<?php echo esc_attr( $item->page_order ); ?>" min="0" style="width:60px;" />
+								</td>
 								<td>
 									<?php if ( $item->source_type === 'image' ) : ?>
 										<img src="<?php echo esc_url( $item->source_url ); ?>" style="max-width: 100px; height: auto;" />
@@ -222,6 +227,56 @@ jQuery(document).ready(function($) {
 					$row.fadeOut(function() {
 						$(this).remove();
 					});
+				} else {
+					alert('Error: ' + response.data.message);
+				}
+			},
+			error: function() {
+				alert('<?php _e( 'An error occurred during deletion', 'flip-menu' ); ?>');
+			}
+		});
+	});
+
+	// Inline page order editing
+	$('.inline-order').on('change', function() {
+		var $row = $(this).closest('tr');
+		var itemId = $row.data('item-id');
+		var newOrder = $(this).val();
+
+		$.ajax({
+			url: flipMenuAdmin.ajax_url,
+			type: 'POST',
+			data: {
+				action: 'flip_menu_update_order',
+				nonce: flipMenuAdmin.nonce,
+				item_id: itemId,
+				page_order: newOrder
+			},
+			success: function(response) {
+				if (!response.success) {
+					alert('Error: ' + response.data.message);
+				}
+			},
+			error: function() {
+				alert('<?php _e( 'An error occurred while updating order', 'flip-menu' ); ?>');
+			}
+		});
+	});
+
+	// Delete all items
+	$('#delete-all-items').on('click', function() {
+		if (!confirm('<?php _e( 'Are you sure you want to delete all menu items?', 'flip-menu' ); ?>')) return;
+		$.ajax({
+			url: flipMenuAdmin.ajax_url,
+			type: 'POST',
+			data: {
+				action: 'flip_menu_delete_all_items',
+				nonce: flipMenuAdmin.nonce,
+				shop_id: <?php echo intval($selected_shop); ?>
+			},
+			success: function(response) {
+				if (response.success) {
+					$('#menu-items-list').empty().append('<tr><td colspan="5"><?php _e( 'No menu items found. Upload your first menu!', 'flip-menu' ); ?></td></tr>');
 				} else {
 					alert('Error: ' + response.data.message);
 				}

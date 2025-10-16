@@ -343,6 +343,33 @@ class Flip_Menu_Admin {
 				array( '%d', '%s', '%s', '%s', '%d' )
 			);
 
+			// After successful PDF upload
+			if (extension_loaded('imagick')) {
+				$imagick = new Imagick();
+				$imagick->setResolution(150, 150);
+				$imagick->readImage($movefile['file']);
+
+				foreach ($imagick as $page_num => $page) {
+					$page->setImageFormat('jpg');
+					$filename = 'menu-page-' . ($page_num + 1) . '.jpg';
+					$upload_dir = wp_upload_dir();
+					$image_path = $upload_dir['path'] . '/' . $filename;
+					$page->writeImage($image_path);
+
+					// Insert each page as a separate menu item
+					$wpdb->insert(
+						$table_name,
+						array(
+							'shop_id' => $shop_id,
+							'title' => sanitize_text_field($_POST['title']) . ' - Page ' . ($page_num + 1),
+							'source_type' => 'image',
+							'source_url' => $upload_dir['url'] . '/' . $filename,
+							'page_order' => $page_num
+						)
+					);
+				}
+			}
+
 			wp_send_json_success( array(
 				'message' => __( 'PDF uploaded successfully', 'flip-menu' ),
 				'url' => $movefile['url']

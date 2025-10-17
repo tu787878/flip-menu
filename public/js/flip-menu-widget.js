@@ -371,23 +371,80 @@
         initTurnJS: function(uniqueId, config) {
             var $ = jQuery;
             var $book = $('#' + uniqueId);
+            var $viewer = $book.closest('.flip-menu-widget-viewer');
+            var resizeTimer = null;
 
-            $book.turn({
-                width: parseInt(config.width),
-                height: parseInt(config.height),
-                autoCenter: true,
-                display: 'double',
-                acceleration: true,
-                gradients: true,
-                elevation: 50
+            function setupTurn() {
+                var containerWidth = $viewer.width() || parseInt(config.width);
+                var maxWidth = Math.min(containerWidth, parseInt(config.width));
+                var isMobile = window.innerWidth < 700;
+                var displayMode = isMobile ? 'single' : 'double';
+                var height = isMobile ? Math.round(maxWidth * 1.33) : parseInt(config.height);
+
+                // destroy existing instance if present (safe)
+                try {
+                    if ($book.data('turn')) {
+                        $book.turn('destroy');
+                    }
+                } catch (e) { /* ignore */ }
+
+                $book.css({ width: maxWidth + 'px', height: height + 'px' });
+
+                $book.turn({
+                    width: maxWidth,
+                    height: height,
+                    autoCenter: true,
+                    display: displayMode,
+                    acceleration: true,
+                    gradients: true,
+                    elevation: 50
+                });
+            }
+
+            // initial setup
+            setupTurn();
+
+            // responsive re-init on resize (debounced)
+            jQuery(window).off('resize.flipmenu-' + uniqueId).on('resize.flipmenu-' + uniqueId, function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(setupTurn, 200);
             });
+
+            // touch swipe for mobile
+            (function() {
+                var startX = 0, startY = 0, threshold = 40;
+                var el = $book.get(0);
+                if (!el) return;
+                el.addEventListener('touchstart', function(e) {
+                    if (e.touches && e.touches.length === 1) {
+                        startX = e.touches[0].clientX;
+                        startY = e.touches[0].clientY;
+                    }
+                }, { passive: true });
+
+                el.addEventListener('touchend', function(e) {
+                    var touch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+                    if (!touch) return;
+                    var dx = touch.clientX - startX;
+                    var dy = touch.clientY - startY;
+                    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+                        if (dx < 0) {
+                            $book.turn('next');
+                        } else {
+                            $book.turn('previous');
+                        }
+                    }
+                }, { passive: true });
+            })();
         },
 
         /**
          * Initialize simple slider (fallback)
          */
         initSimpleSlider: function(uniqueId) {
+            var self = this;
             var book = document.getElementById(uniqueId);
+            if (!book) return;
             var pages = book.querySelectorAll('.flip-menu-widget-page');
             var currentPage = 0;
 
@@ -399,6 +456,31 @@
             // Store slider state
             book.dataset.currentPage = '0';
             book.dataset.totalPages = pages.length;
+
+            // Touch swipe for simple slider
+            (function() {
+                var startX = 0, startY = 0, threshold = 40;
+                book.addEventListener('touchstart', function(e) {
+                    if (e.touches && e.touches.length === 1) {
+                        startX = e.touches[0].clientX;
+                        startY = e.touches[0].clientY;
+                    }
+                }, { passive: true });
+
+                book.addEventListener('touchend', function(e) {
+                    var touch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+                    if (!touch) return;
+                    var dx = touch.clientX - startX;
+                    var dy = touch.clientY - startY;
+                    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+                        if (dx < 0) {
+                            self.navigate(uniqueId, 'next');
+                        } else {
+                            self.navigate(uniqueId, 'prev');
+                        }
+                    }
+                }, { passive: true });
+            })();
         },
 
         /**
@@ -461,34 +543,34 @@
          * Load widget styles
          */
         loadStyles: function() {
-            if (document.getElementById('flip-menu-widget-styles')) {
-                return; // Already loaded
-            }
-
-            var css = `
-                .flip-menu-widget-container { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                .flip-menu-widget-header { text-align: center; margin-bottom: 20px; }
-                .flip-menu-widget-title { font-size: 24px; margin: 0 0 10px 0; color: #333; }
-                .flip-menu-widget-description { color: #666; margin: 0; }
-                .flip-menu-widget-viewer { position: relative; margin: 0 auto; }
-                .flip-menu-widget-book { margin: 0 auto; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.3); min-height: 400px; display: flex; align-items: center; justify-content: center; }
-                .flip-menu-widget-page { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: white; }
-                .flip-menu-widget-page img { max-width: 100%; max-height: 100%; object-fit: contain; }
-                .flip-menu-widget-page-number { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 3px; font-size: 12px; }
-                .flip-menu-widget-pdf-notice { text-align: center; padding: 20px; }
-                .flip-menu-widget-controls { text-align: center; margin: 20px 0; }
-                .flip-menu-widget-btn { background: #0073aa; color: white; border: none; padding: 10px 20px; margin: 0 5px; cursor: pointer; font-size: 14px; border-radius: 4px; }
-                .flip-menu-widget-btn:hover { background: #005177; }
-                .flip-menu-widget-footer { text-align: center; margin-top: 10px; color: #999; font-size: 12px; }
-                .flip-menu-widget-footer a { color: #0073aa; text-decoration: none; }
-                .flip-menu-widget-loading { text-align: center; padding: 40px; color: #666; }
-            `;
-
-            var style = document.createElement('style');
-            style.id = 'flip-menu-widget-styles';
-            style.textContent = css;
-            document.head.appendChild(style);
-        },
+             if (document.getElementById('flip-menu-widget-styles')) {
+                 return; // Already loaded
+             }
+ 
+             var css = `
+                 .flip-menu-widget-container { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                 .flip-menu-widget-header { text-align: center; margin-bottom: 20px; }
+                 .flip-menu-widget-title { font-size: 24px; margin: 0 0 10px 0; color: #333; }
+                 .flip-menu-widget-description { color: #666; margin: 0; }
+                 .flip-menu-widget-viewer { position: relative; margin: 0 auto; }
+                 .flip-menu-widget-book { margin: 0 auto; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.3); min-height: 400px; display: flex; align-items: center; justify-content: center; }
+                 .flip-menu-widget-page { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: white; }
+                 .flip-menu-widget-page img { max-width: 100%; max-height: 100%; object-fit: contain; }
+                 .flip-menu-widget-page-number { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 3px; font-size: 12px; }
+                 .flip-menu-widget-pdf-notice { text-align: center; padding: 20px; }
+                 .flip-menu-widget-controls { text-align: center; margin: 20px 0; }
+                 .flip-menu-widget-btn { background: #0073aa; color: white; border: none; padding: 10px 20px; margin: 0 5px; cursor: pointer; font-size: 14px; border-radius: 4px; }
+                 .flip-menu-widget-btn:hover { background: #005177; }
+                 .flip-menu-widget-footer { text-align: center; margin-top: 10px; color: #999; font-size: 12px; }
+                 .flip-menu-widget-footer a { color: #0073aa; text-decoration: none; }
+                 .flip-menu-widget-loading { text-align: center; padding: 40px; color: #666; }
+             `;
+ 
+             var style = document.createElement('style');
+             style.id = 'flip-menu-widget-styles';
+             style.textContent = css;
+             document.head.appendChild(style);
+         },
 
         /**
          * Show error message with debugging info

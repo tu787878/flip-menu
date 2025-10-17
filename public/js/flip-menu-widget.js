@@ -239,47 +239,51 @@
             // Render a single PDF url into multiple page divs with canvases
             this.renderPdfToPages = this.renderPdfToPages || function(pdfUrl, container, maxWidth, maxHeight) {
                 return self.ensurePdfJs().then(function(pdfjsLib) {
-                    return pdfjsLib.getDocument({ url: pdfUrl }).promise;
-                }).then(function(pdf) {
-                    var promises = [];
-                    for (let p = 1; p <= pdf.numPages; p++) {
-                        promises.push(pdf.getPage(p).then(function(page) {
-                            // Create page wrapper
-                            var pageDiv = document.createElement('div');
-                            pageDiv.className = 'flip-menu-widget-page';
+                    // Try fetch first so we can use getDocument({data}) — clearer error handling
+                    return fetch(pdfUrl, { mode: 'cors' }).then(function(response) {
+                        if (!response.ok) throw new Error('Network response was not ok: ' + response.status);
+                        return response.arrayBuffer();
+                    }).then(function(arrayBuffer) {
+                        return pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    }).catch(function(fetchErr) {
+                        // If fetch fails (likely CORS), try getDocument with url — may still fail if CORS blocked
+                        return pdfjsLib.getDocument({ url: pdfUrl }).promise;
+                    }).then(function(pdf) {
+                        var promises = [];
+                        for (let p = 1; p <= pdf.numPages; p++) {
+                            promises.push(pdf.getPage(p).then(function(page) {
+                                var pageDiv = document.createElement('div');
+                                pageDiv.className = 'flip-menu-widget-page';
 
-                            // Create canvas
-                            var canvas = document.createElement('canvas');
-                            canvas.style.maxWidth = '100%';
-                            canvas.style.maxHeight = '100%';
-                            pageDiv.appendChild(canvas);
+                                var canvas = document.createElement('canvas');
+                                canvas.style.maxWidth = '100%';
+                                canvas.style.maxHeight = '100%';
+                                pageDiv.appendChild(canvas);
 
-                            // page number badge
-                            var badge = document.createElement('div');
-                            badge.className = 'flip-menu-widget-page-number';
-                            badge.textContent = p;
-                            pageDiv.appendChild(badge);
+                                var badge = document.createElement('div');
+                                badge.className = 'flip-menu-widget-page-number';
+                                badge.textContent = p;
+                                pageDiv.appendChild(badge);
 
-                            // Append to container (book)
-                            container.appendChild(pageDiv);
+                                container.appendChild(pageDiv);
 
-                            // Render page to canvas at suitable scale
-                            var viewport = page.getViewport({ scale: 1 });
-                            var scale = Math.min((maxWidth || viewport.width) / viewport.width, (maxHeight || viewport.height) / viewport.height, 2);
-                            var scaledViewport = page.getViewport({ scale: scale });
+                                var viewport = page.getViewport({ scale: 1 });
+                                var scale = Math.min((maxWidth || viewport.width) / viewport.width, (maxHeight || viewport.height) / viewport.height, 2);
+                                var scaledViewport = page.getViewport({ scale: scale });
 
-                            canvas.width = Math.round(scaledViewport.width);
-                            canvas.height = Math.round(scaledViewport.height);
+                                canvas.width = Math.round(scaledViewport.width);
+                                canvas.height = Math.round(scaledViewport.height);
 
-                            var renderContext = {
-                                canvasContext: canvas.getContext('2d'),
-                                viewport: scaledViewport
-                            };
+                                var renderContext = {
+                                    canvasContext: canvas.getContext('2d'),
+                                    viewport: scaledViewport
+                                };
 
-                            return page.render(renderContext).promise;
-                        }));
-                    }
-                    return Promise.all(promises);
+                                return page.render(renderContext).promise;
+                            }));
+                        }
+                        return Promise.all(promises);
+                    });
                 });
             };
 

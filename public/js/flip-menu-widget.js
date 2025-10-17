@@ -185,7 +185,7 @@
             // Create unique ID for this instance
             var uniqueId = 'flip-menu-' + Math.random().toString(36).substr(2, 9);
 
-            // Build HTML
+            // Build HTML skeleton (pages will be appended asynchronously)
             var html = '';
             html += '<div class="flip-menu-widget-container" style="max-width: ' + config.width + 'px; margin: 0 auto;">';
             html += '  <div class="flip-menu-widget-header">';
@@ -195,24 +195,7 @@
             }
             html += '  </div>';
             html += '  <div class="flip-menu-widget-viewer">';
-            html += '    <div id="' + uniqueId + '" class="flip-menu-widget-book">';
-
-            // Add pages
-            items.forEach(function(item, index) {
-                html += '      <div class="flip-menu-widget-page">';
-                if (item.source_type === 'image') {
-                    html += '        <img src="' + item.source_url + '" alt="' + this.escapeHtml(item.title) + '" />';
-                } else {
-                    html += '        <div class="flip-menu-widget-pdf-notice">';
-                    html += '          <p>PDF Menu</p>';
-                    html += '          <a href="' + item.source_url + '" target="_blank">View Full PDF</a>';
-                    html += '        </div>';
-                }
-                html += '        <div class="flip-menu-widget-page-number">' + (index + 1) + '</div>';
-                html += '      </div>';
-            }.bind(this));
-
-            html += '    </div>';
+            html += '    <div id="' + uniqueId + '" class="flip-menu-widget-book"></div>';
             html += '  </div>';
             html += '  <div class="flip-menu-widget-controls">';
             html += '    <button class="flip-menu-widget-btn flip-menu-widget-prev" data-id="' + uniqueId + '">← Previous</button>';
@@ -228,14 +211,136 @@
             // Load styles if not already loaded
             this.loadStyles();
 
-            // Load Turn.js if available, otherwise use simple slider
-            this.initializeViewer(uniqueId, config);
+            var self = this;
+            var bookEl = document.getElementById(uniqueId);
 
-            // Store instance
-            this.instances.push({
-                id: uniqueId,
-                element: element,
-                config: config
+            // Helper: ensure PDF.js is available (loads from unpkg if needed)
+            this.ensurePdfJs = this.ensurePdfJs || function() {
+                return new Promise(function(resolve, reject) {
+                    if (window.pdfjsLib) {
+                        return resolve(window.pdfjsLib);
+                    }
+                    var script = document.createElement('script');
+                    script.src = 'https://unpkg.com/pdfjs-dist@3.10.111/build/pdf.min.js';
+                    script.onload = function() {
+                        // Set workerSrc if worker not automatically configured
+                        if (window.pdfjsLib && !window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.10.111/build/pdf.worker.min.js';
+                        }
+                        resolve(window.pdfjsLib);
+                    };
+                    script.onerror = function(e) {
+                        reject(new Error('Failed to load PDF.js'));
+                    };
+                    document.head.appendChild(script);
+                });
+            };
+
+            // Render a single PDF url into multiple page divs with canvases
+            this.renderPdfToPages = this.renderPdfToPages || function(pdfUrl, container, maxWidth, maxHeight) {
+                return self.ensurePdfJs().then(function(pdfjsLib) {
+                    return pdfjsLib.getDocument({ url: pdfUrl }).promise;
+                }).then(function(pdf) {
+                    var promises = [];
+                    for (let p = 1; p <= pdf.numPages; p++) {
+                        promises.push(pdf.getPage(p).then(function(page) {
+                            // Create page wrapper
+                            var pageDiv = document.createElement('div');
+                            pageDiv.className = 'flip-menu-widget-page';
+
+                            // Create canvas
+                            var canvas = document.createElement('canvas');
+                            canvas.style.maxWidth = '100%';
+                            canvas.style.maxHeight = '100%';
+                            pageDiv.appendChild(canvas);
+
+                            // page number badge
+                            var badge = document.createElement('div');
+                            badge.className = 'flip-menu-widget-page-number';
+                            badge.textContent = p;
+                            pageDiv.appendChild(badge);
+
+                            // Append to container (book)
+                            container.appendChild(pageDiv);
+
+                            // Render page to canvas at suitable scale
+                            var viewport = page.getViewport({ scale: 1 });
+                            var scale = Math.min((maxWidth || viewport.width) / viewport.width, (maxHeight || viewport.height) / viewport.height, 2);
+                            var scaledViewport = page.getViewport({ scale: scale });
+
+                            canvas.width = Math.round(scaledViewport.width);
+                            canvas.height = Math.round(scaledViewport.height);
+
+                            var renderContext = {
+                                canvasContext: canvas.getContext('2d'),
+                                viewport: scaledViewport
+                            };
+
+                            return page.render(renderContext).promise;
+                        }));
+                    }
+                    return Promise.all(promises);
+                });
+            };
+
+            // Build pages: for images create page immediately; for PDFs load async and create pages per PDF page
+            var buildPromises = items.map(function(item, index) {
+                return new Promise(function(resolve) {
+                    if (item.source_type === 'image') {
+                        var pageDiv = document.createElement('div');
+                        pageDiv.className = 'flip-menu-widget-page';
+
+                        var img = document.createElement('img');
+                        img.src = item.source_url;
+                        img.alt = item.title || 'Menu page';
+                        pageDiv.appendChild(img);
+
+                        var badge = document.createElement('div');
+                        badge.className = 'flip-menu-widget-page-number';
+                        badge.textContent = (index + 1);
+                        pageDiv.appendChild(badge);
+
+                        bookEl.appendChild(pageDiv);
+                        // resolve immediately once image loads (or on error)
+                        if (img.complete) {
+                            resolve();
+                        } else {
+                            img.onload = img.onerror = function() { resolve(); };
+                        }
+                    } else {
+                        // PDF: render all pages of the PDF into the book
+                        self.renderPdfToPages(item.source_url, bookEl, parseInt(config.width), parseInt(config.height)).then(function() {
+                            resolve();
+                        }).catch(function(err) {
+                            // on error, insert a fallback page with link to PDF
+                            var pageDiv = document.createElement('div');
+                            pageDiv.className = 'flip-menu-widget-page';
+                            pageDiv.innerHTML = '<div class="flip-menu-widget-pdf-notice"><p>PDF Menu</p><a href="' + item.source_url + '" target="_blank">View Full PDF</a></div>';
+                            bookEl.appendChild(pageDiv);
+                            resolve();
+                        });
+                    }
+                });
+            });
+
+            // Once all pages (images + pdf pages) are appended/rendered, initialize viewer
+            Promise.all(buildPromises).then(function() {
+                // If no pages were created (defensive)
+                var pages = bookEl.querySelectorAll('.flip-menu-widget-page');
+                if (pages.length === 0) {
+                    element.innerHTML = '<p>No menu items available</p>';
+                    return;
+                }
+
+                // Store instance
+                self.instances.push({
+                    id: uniqueId,
+                    element: element,
+                    config: config
+                });
+
+                // Initialize viewer now that pages exist
+                self.initializeViewer(uniqueId, config);
             });
         },
 
@@ -244,6 +349,9 @@
          */
         initializeViewer: function(uniqueId, config) {
             var bookElement = document.getElementById(uniqueId);
+
+            // Ensure book has some minimum height to contain canvases/images
+            bookElement.style.minHeight = (parseInt(config.height) || 600) + 'px';
 
             // Check if jQuery and Turn.js are available
             if (typeof jQuery !== 'undefined' && jQuery.fn.turn) {

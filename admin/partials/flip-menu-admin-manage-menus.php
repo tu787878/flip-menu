@@ -56,10 +56,6 @@ if ( $selected_shop ) {
 					<input type="hidden" name="shop_id" value="<?php echo esc_attr( $selected_shop ); ?>" />
 					<table class="form-table">
 						<tr>
-							<th><label for="pdf-title"><?php _e( 'Title', 'flip-menu' ); ?></label></th>
-							<td><input type="text" id="pdf-title" name="title" class="regular-text" required /></td>
-						</tr>
-						<tr>
 							<th><label for="pdf-file"><?php _e( 'PDF File', 'flip-menu' ); ?></label></th>
 							<td><input type="file" id="pdf-file" name="pdf_file" accept=".pdf" required /></td>
 						</tr>

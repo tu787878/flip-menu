@@ -8,17 +8,17 @@
  * registers the activation and deactivation functions, and defines a function
  * that starts the plugin.
  *
- * @link              http://example.com
- * @since             1.0.0
+ * @link              https://shop.tcg-marketing.de/
+ * @since             1.0.1
  * @package           Flip_Menu
  *
  * @wordpress-plugin
  * Plugin Name:       Flip Menu
- * Plugin URI:        http://example.com/flip-menu-uri/
+ * Plugin URI:        https://shop.tcg-marketing.de/
  * Description:       Create interactive flip menus using Turn.js. Upload PDFs or images to create beautiful flip-through menus for different shops.
- * Version:           1.0.0
- * Author:            Your Name or Your Company
- * Author URI:        http://example.com/
+ * Version:           1.0.1
+ * Author:            TCG Web & Marketing
+ * Author URI:        https://shop.tcg-marketing.de/
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       flip-menu

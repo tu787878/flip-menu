@@ -202,7 +202,7 @@
             html += '    <button class="flip-menu-widget-btn flip-menu-widget-next" data-id="' + uniqueId + '">Next →</button>';
             html += '  </div>';
             html += '  <div class="flip-menu-widget-footer">';
-            html += '    <small>Powered by <a href="' + config.apiUrl.replace('/wp-json', '') + '" target="_blank">Flip Menu</a></small>';
+            html += '    <small>Powered by <a href="' + config.apiUrl.replace('/wp-json', '') + '" target="_blank">TCG Web & Marketing</a></small>';
             html += '  </div>';
             html += '</div>';
 

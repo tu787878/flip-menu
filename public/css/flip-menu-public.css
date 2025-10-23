@@ -81,28 +81,37 @@
 
 /* Controls */
 .flip-menu-controls {
-	margin-top: 20px;
+	display: flex;
+	justify-content: center;
+	gap: 32px;
+	background: transparent;
 }
 
 .flip-menu-btn {
-	background: #0073aa;
-	color: white;
-	border: none;
-	padding: 12px 24px;
+	background: transparent;
+	color: #fff;
+	border: 1.5px solid #bfa16b;
+	padding: 18px 48px;
 	margin: 0 5px;
 	cursor: pointer;
-	font-size: 16px;
-	border-radius: 4px;
-	transition: background 0.3s ease;
+	font-size: 22px;
+	border-radius: 0;
+	letter-spacing: 0.22em;
+	font-family: 'Arial', 'Helvetica Neue', Arial, sans-serif;
+	font-weight: 400;
+	text-transform: uppercase;
+	transition: background 0.2s, color 0.2s, border-color 0.2s;
+	box-shadow: none;
+	position: relative;
+	z-index: 1;
 }
 
-.flip-menu-btn:hover {
-	background: #005177;
-}
-
+.flip-menu-btn:hover,
 .flip-menu-btn:focus {
-	outline: 2px solid #0073aa;
-	outline-offset: 2px;
+	background: rgba(191, 161, 107, 0.08);
+	color: #bfa16b;
+	border-color: #bfa16b;
+	outline: none;
 }
 
 .flip-menu-btn:disabled {
@@ -129,6 +138,19 @@
 	.flip-menu-btn {
 		padding: 10px 20px;
 		font-size: 14px;
+	}
+}
+
+@media (max-width: 700px) {
+	.flip-menu-controls {
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.flip-menu-btn {
+		width: 100%;
+		padding: 14px 0;
+		font-size: 18px;
 	}
 }
 
